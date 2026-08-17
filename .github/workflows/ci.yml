@@ -74,6 +74,35 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com
 
+  # ─── Frontend Demo: type-check, lint, build ──────────────────────────────────
+  frontend-demo:
+    name: Frontend Demo
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: frontend-demo
+
+      - name: TypeScript type check
+        run: npm run type-check
+        working-directory: frontend-demo
+
+      - name: ESLint
+        run: npm run lint
+        working-directory: frontend-demo
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend-demo
+
   # ─── Terraform: format and validate ─────────────────────────────────────────
   terraform:
     name: Terraform
@@ -106,7 +135,7 @@ jobs:
     name: Build Lambda Package
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    needs: [backend, frontend, terraform]
+    needs: [backend, frontend, frontend-demo, terraform]
 
     steps:
       - uses: actions/checkout@v4
