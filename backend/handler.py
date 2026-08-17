@@ -143,6 +143,16 @@ def _handle_recommendations(event: dict[str, Any], config: Any) -> dict[str, Any
 
 def _handle_advisor(event: dict[str, Any], config: Any) -> dict[str, Any]:
     """POST /api/advisor"""
+    # Fast-fail if OpenAI is not configured — keeps the rest of the app working
+    # even when the advisor is unavailable. See CLAUDE.md §31.
+    if not config.openai_api_key:
+        logger.warning("advisor_unavailable", extra={"reason": "OPENAI_API_KEY not configured"})
+        return error_response(
+            ErrorCode.AGENT_ERROR,
+            "AI advisor is not configured. Set OPENAI_API_KEY to enable it.",
+            503,
+        )
+
     try:
         from pydantic import ValidationError
 

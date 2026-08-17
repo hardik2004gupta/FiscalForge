@@ -1,0 +1,12 @@
+# FiscalForge Lambda Runtime Dependencies
+# Used by scripts/build_lambda.sh to build the deployment package.
+# Dev tools (ruff, mypy, pytest, moto, boto3-stubs) are excluded — they are NOT deployed.
+# boto3 is excluded — Lambda Python 3.11 runtime includes it.
+
+# ─── Data Validation ─────────────────────────────────────────────────────────
+pydantic>=2.0.0,<3.0.0
+
+# ─── AI Agent ────────────────────────────────────────────────────────────────
+langgraph>=0.1.0,<1.0.0
+langchain-openai>=0.1.0,<1.0.0
+openai>=1.0.0,<2.0.0

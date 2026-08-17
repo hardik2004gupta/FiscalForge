@@ -4,111 +4,56 @@
 
 > Understand your AWS spend. Find savings. Act with confidence.
 
----
+FiscalForge answers four questions about your AWS account:
 
-## Overview
-
-FiscalForge analyzes AWS cost and resource data, identifies optimization opportunities through deterministic rules, and uses an AI agent to explain findings in natural language.
-
-**Core architecture:** Next.js → API Gateway → Python Lambda → AWS APIs → Optimization Engine → LangGraph AI Agent
-
----
-
-## Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui, Recharts |
-| Backend | Python 3.11, AWS Lambda, API Gateway |
-| AWS SDK | boto3 |
-| Cost Data | AWS Cost Explorer |
-| Resources | EC2, RDS, S3, CloudWatch |
-| AI Agent | LangGraph, OpenAI GPT-4o |
-| Infrastructure | Terraform |
-| CI/CD | GitHub Actions |
-| Testing | pytest, moto |
-| Quality | Ruff, mypy |
-
----
-
-## Application Pages
-
-| Route | Purpose |
-|---|---|
-| `/` | Marketing homepage |
-| `/dashboard` | Primary AWS cost overview and KPI cards |
-| `/costs` | Detailed cost analytics with charts |
-| `/resources` | EC2, RDS, and S3 inventory |
-| `/advisor` | AI cost advisor chat |
+1. How much am I spending?
+2. Where is the money going?
+3. Which resources might be wasting money?
+4. What should I do about it?
 
 ---
 
 ## Architecture
 
 ```
-Next.js Dashboard
-      ↓ HTTPS
-API Gateway
+Next.js Frontend
       ↓
-AWS Lambda (Python — single function)
+API Gateway (HTTP API)
       ↓
-AWS APIs: Cost Explorer / EC2 / RDS / S3 / CloudWatch
+ONE Python Lambda
       ↓
-Optimization Engine (deterministic rules)
+AWS APIs (Cost Explorer, EC2, RDS, S3, CloudWatch)
       ↓
-LangGraph AI Agent (read-only — advisory only)
+Deterministic Optimization Engine
       ↓
-Recommendations → User Approval → Action API → Lambda → AWS
+ONE LangGraph AI Agent
 ```
 
-The AI agent is **read-only**. All AWS actions require explicit user confirmation before Lambda executes them.
+One frontend. One API boundary. One Lambda. One agent. No microservices.
 
 ---
 
-## Repository Structure
+## Tech Stack
 
-```
-fiscalforge/
-├── frontend/           Next.js app (App Router)
-│   ├── app/            Pages: /, /dashboard, /costs, /resources, /advisor
-│   ├── components/     Reusable UI components (Phase 3)
-│   ├── lib/            Centralized API client, config, utilities
-│   └── types/          TypeScript interfaces matching backend models
-├── backend/            Python Lambda application
-│   ├── handler.py      Lambda entry point and request router
-│   ├── models.py       Pydantic data models (source of truth)
-│   ├── aws/            AWS service adapters (Cost Explorer, EC2, RDS, S3)
-│   ├── optimization/   Deterministic rules engine
-│   ├── agent/          LangGraph advisor agent
-│   └── mock/           Realistic mock data for local development
-├── terraform/          AWS infrastructure as code (Phase 4)
-├── tests/              pytest test suite with mocked boto3
-├── docs/               Architecture and API contract documentation
-└── .github/workflows/  CI: test, lint, type-check, terraform validate
-```
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15, TypeScript, Tailwind CSS, Recharts |
+| Backend | Python 3.11, AWS Lambda, API Gateway HTTP API |
+| AI | LangGraph, OpenAI GPT-4o |
+| Infrastructure | Terraform |
+| CI/CD | GitHub Actions |
 
 ---
 
-## Local Development
+## Local Development (Mock Mode)
+
+No AWS account required for local development. All AWS calls are replaced with realistic mock data.
 
 ### Prerequisites
-- Python 3.11+
+
 - Node.js 20+
-- AWS CLI (optional — mock mode available without credentials)
-
-### Environment Setup
-
-```bash
-cp .env.example .env
-# FISCALFORGE_MOCK_AWS=true is the default — no AWS account needed
-```
-
-### Backend
-
-```bash
-pip install -r requirements.txt
-pytest tests/
-```
+- Python 3.11+
+- pip
 
 ### Frontend
 
@@ -118,51 +63,302 @@ npm install
 npm run dev
 ```
 
-### Mock AWS Mode
+The frontend runs at `http://localhost:3000`. The dev server proxies `/api/*` to `http://localhost:8000`.
 
-Run with realistic mock data — no AWS credentials required:
+### Backend
 
 ```bash
-FISCALFORGE_MOCK_AWS=true
+pip install -r requirements.txt
+```
+
+Create `.env` from the example:
+
+```bash
+cp .env.example .env
+```
+
+Run the Lambda handler locally using the mock server:
+
+```bash
+FISCALFORGE_MOCK_AWS=true python -m backend.dev_server
+```
+
+The mock backend runs at `http://localhost:8000`.
+
+### Environment Variables
+
+Copy `.env.example` and fill in values:
+
+```
+FISCALFORGE_MOCK_AWS=true   # Set false for real AWS
+AWS_REGION=us-east-1
+OPENAI_API_KEY=             # Required only for the AI advisor
+OPENAI_MODEL=gpt-4o
+```
+
+**Never commit `.env`** — it is in `.gitignore`.
+
+---
+
+## Running Tests
+
+```bash
+pytest tests/ -v
+```
+
+Tests run in mock mode and make no live AWS calls. All optimization rules, cost calculations, and resource normalization logic are covered.
+
+```bash
+ruff check backend/ tests/
+ruff format --check backend/ tests/
+mypy backend/
 ```
 
 ---
 
-## API Endpoints
+## Application Routes
+
+| Route | Description |
+|---|---|
+| `/` | Marketing homepage |
+| `/dashboard` | KPI cards, cost trend chart, service breakdown |
+| `/costs` | Detailed cost analytics with spending trend |
+| `/resources` | EC2, RDS, S3 inventory + optimization recommendations |
+| `/advisor` | AI cost advisor chat interface |
+
+---
+
+## API Reference
+
+### `GET /api/costs`
+
+Returns total and daily cost data with period-over-period comparison.
+
+```json
+{
+  "total_cost": 4281.62,
+  "previous_cost": 3810.41,
+  "change_percent": 12.36,
+  "daily_costs": [
+    {"date": "2024-01-01", "cost": 142.05}
+  ],
+  "services": [
+    {"name": "EC2", "cost": 1820.10}
+  ]
+}
+```
+
+### `GET /api/resources`
+
+Returns EC2, RDS, and S3 inventory with utilization data.
+
+### `GET /api/recommendations`
+
+Returns deterministic optimization findings with severity and estimated savings.
+
+### `POST /api/advisor`
+
+Sends a message to the LangGraph AI advisor.
+
+Request: `{"message": "Why did my costs increase?"}`
+
+Response: `{"response": "Your AWS spend increased by..."}`
+
+### `POST /api/actions/ec2/stop`
+
+Stops an EC2 instance. **Only called after explicit user confirmation in the UI.**
+
+Request: `{"instance_id": "i-1234567890abcdef0"}`
+
+---
+
+## AI Safety Boundary
+
+The AI advisor **never executes AWS actions**. It can only recommend.
 
 ```
-GET  /api/costs                  AWS spending data and period comparison
-GET  /api/resources              EC2, RDS, S3 inventory with utilization
-GET  /api/recommendations        Deterministic optimization findings
-POST /api/advisor                AI advisor natural language query
-POST /api/actions/ec2/stop       Approved EC2 stop (requires user confirmation)
+AI Advisor → Recommendation → User Approval Dialog → POST /api/actions/ec2/stop → Lambda → AWS
 ```
 
-Full contract: [docs/api-contract.md](docs/api-contract.md)
+The user sees a confirmation dialog before any EC2 stop action executes. The AI has no access to the action endpoint.
+
+---
+
+## AWS Deployment
+
+### Prerequisites
+
+- AWS CLI configured with sufficient permissions
+- Terraform 1.6+
+- Python 3.11 (for building the Lambda package)
+
+### Step 1: Build the Lambda package
+
+```bash
+./scripts/build_lambda.sh
+```
+
+Output: `dist/fiscalforge-backend.zip`
+
+### Step 2: Deploy infrastructure
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+Terraform provisions:
+- Lambda function (`fiscalforge-backend-dev`)
+- API Gateway HTTP API
+- IAM role with least-privilege policy
+- CloudWatch log group (14-day retention)
+
+### Step 3: Configure secrets
+
+`OPENAI_API_KEY` is intentionally absent from Terraform to avoid committing secrets. Inject it after deployment:
+
+```bash
+aws lambda update-function-configuration \
+  --function-name fiscalforge-backend-dev \
+  --environment "Variables={
+    FISCALFORGE_MOCK_AWS=false,
+    OPENAI_MODEL=gpt-4o,
+    OPENAI_API_KEY=sk-...
+  }"
+```
+
+If `OPENAI_API_KEY` is not set, the advisor returns a friendly unavailable message — the rest of the application continues to work normally.
+
+### Step 4: Configure the frontend
+
+Set the API Gateway URL (from `terraform output api_gateway_url`) as the frontend environment variable:
+
+```
+NEXT_PUBLIC_API_URL=https://<id>.execute-api.us-east-1.amazonaws.com
+```
+
+### Terraform Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `aws_region` | `us-east-1` | AWS region |
+| `environment` | `dev` | dev / staging / prod |
+| `lambda_memory_mb` | `512` | Lambda memory (MB) |
+| `lambda_timeout_seconds` | `30` | Lambda timeout |
+| `lambda_zip_path` | `../dist/fiscalforge-backend.zip` | Path to built zip |
+| `log_retention_days` | `14` | CloudWatch log retention |
+| `frontend_origin` | `*` | CORS allowed origin (tighten for production) |
+| `openai_model` | `gpt-4o` | OpenAI model for advisor |
+| `mock_aws` | `false` | Deploy in mock-data mode |
+
+---
+
+## IAM Permissions
+
+The Lambda IAM role uses least-privilege. Granted permissions:
+
+| Service | Permissions | Reason |
+|---|---|---|
+| Cost Explorer | `GetCostAndUsage`, `GetCostForecast` | Read spending data |
+| EC2 | `DescribeInstances`, `DescribeInstanceStatus`, `StopInstances` | Inventory + stop action |
+| RDS | `DescribeDBInstances` | Inventory |
+| S3 | `ListAllMyBuckets`, `GetBucketLocation`, `GetBucketAcl` | Inventory metadata |
+| CloudWatch | `GetMetricStatistics`, `GetMetricData` | EC2 CPU utilization |
+| CloudWatch Logs | `CreateLogGroup`, `CreateLogStream`, `PutLogEvents` | Lambda logging |
+
+`ec2:TerminateInstances` is **not granted**. No destructive permissions.
+
+---
+
+## Optimization Engine
+
+Cost optimization findings are deterministic and rule-based — the AI explains them, it does not discover them.
+
+| Rule | Condition | Severity |
+|---|---|---|
+| EC2 Underutilization | Average CPU < 10% over 7 days | High |
+| EC2 Rightsizing | Running > N days AND CPU < 10% | Medium |
+| NAT Gateway | Minimal traffic detected | Medium |
+| S3 Storage | Large bucket with infrequent access | Low |
+
+Same input always produces the same output. Every rule is independently testable.
+
+---
+
+## Observability
+
+Lambda logs are written as structured JSON to CloudWatch:
+
+```
+/aws/lambda/fiscalforge-backend-dev
+```
+
+Every request is logged with method, path, duration, and status. Errors include error code and message — never stack traces or credentials.
+
+Monitor:
+- Lambda invocations and error rate
+- Lambda duration (p95)
+- API Gateway 4xx and 5xx rates
+
+---
+
+## CI/CD
+
+GitHub Actions runs on every push and pull request:
+
+| Job | Checks |
+|---|---|
+| Backend | ruff lint, ruff format, mypy, pytest |
+| Frontend | TypeScript type check, ESLint, Next.js build |
+| Terraform | `terraform fmt -check`, `terraform init`, `terraform validate` |
+| Build Lambda | Builds `fiscalforge-backend.zip` (main branch only) |
+
+The Lambda artifact is uploaded with 7-day retention. Deployment (`terraform apply`) requires manual execution — it is not automated.
 
 ---
 
 ## Security
 
-- AWS credentials are never in frontend code or source files
-- Lambda uses an IAM role with least-privilege permissions
-- AI agent is advisory only — AWS actions require explicit user approval
-- See [CLAUDE.md §19](CLAUDE.md) for the complete security contract
+- AWS credentials are never in frontend code or browser storage
+- The browser never calls AWS APIs directly
+- No secrets in committed files — `.env` and `*.tfvars` are gitignored
+- Lambda uses an IAM role — no hardcoded credentials
+- `OPENAI_API_KEY` is injected post-deploy, not in Terraform state
+- EC2 termination is not permitted — only stop
+- All destructive actions require explicit user confirmation
 
 ---
 
-## Development Status
+## Project Structure
+
+```
+fiscalforge/
+├── frontend/               Next.js application
+│   ├── app/                Route pages (/, /dashboard, /costs, /resources, /advisor)
+│   ├── components/         Reusable UI components
+│   ├── lib/api.ts          Centralized API client
+│   └── types/              TypeScript interfaces
+├── backend/                Python Lambda application
+│   ├── handler.py          Entry point and routing
+│   ├── aws/                AWS service adapters
+│   ├── optimization/       Deterministic optimization rules
+│   └── agent/              LangGraph advisor agent
+├── terraform/              Infrastructure as Code
+├── scripts/                Build scripts
+├── tests/                  Backend unit tests
+└── .github/workflows/      CI/CD pipeline
+```
+
+---
+
+## Development Phases
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 0 | ✅ Complete | Engineering contract (CLAUDE.md) |
-| Phase 1 | ✅ Complete | Repository foundation and architecture skeleton |
-| Phase 2 | 🔲 Planned | AWS integrations, optimization engine, AI agent |
-| Phase 3 | 🔲 Planned | Premium frontend, full API integration |
-| Phase 4 | 🔲 Planned | Terraform, CI/CD, observability, deployment |
-
----
-
-## Engineering Contract
-
-See [CLAUDE.md](CLAUDE.md) — the binding engineering contract for all implementation phases.
+| Phase 0 | Complete | Engineering contract (CLAUDE.md) |
+| Phase 1 | Complete | Repository foundation and CI setup |
+| Phase 2 | Complete | AWS integrations, optimization engine, AI agent |
+| Phase 3 | Complete | Premium frontend, full API integration |
+| Phase 4 | Complete | Terraform, CI/CD, packaging, security, testing |

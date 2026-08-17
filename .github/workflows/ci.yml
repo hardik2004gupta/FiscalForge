@@ -18,8 +18,8 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -36,12 +36,12 @@ jobs:
       - name: pytest
         run: pytest tests/ -v
         env:
-          FISCALFORGE_MOCK_AWS: 'true'
-          AWS_REGION: 'us-east-1'
-          OPENAI_API_KEY: 'test-key-ci'
-          OPENAI_MODEL: 'gpt-4o'
+          FISCALFORGE_MOCK_AWS: "true"
+          AWS_REGION: us-east-1
+          OPENAI_API_KEY: test-key-ci
+          OPENAI_MODEL: gpt-4o
 
-  # ─── Frontend: type-check and build ─────────────────────────────────────────
+  # ─── Frontend: type-check, lint, build ──────────────────────────────────────
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -52,8 +52,8 @@ jobs:
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -64,11 +64,15 @@ jobs:
         run: npm run type-check
         working-directory: frontend
 
+      - name: ESLint
+        run: npm run lint
+        working-directory: frontend
+
       - name: Build
         run: npm run build
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: 'https://placeholder.execute-api.us-east-1.amazonaws.com'
+          NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com
 
   # ─── Terraform: format and validate ─────────────────────────────────────────
   terraform:
@@ -81,7 +85,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: '~> 1.6'
+          terraform_version: "~> 1.6"
 
       - name: Terraform format check
         run: terraform fmt -check
@@ -94,3 +98,33 @@ jobs:
       - name: Terraform validate
         run: terraform validate
         working-directory: terraform
+
+  # ─── Lambda package build (main branch only) ─────────────────────────────────
+  # Verifies the deployment package can be built reproducibly.
+  # Does NOT deploy — terraform apply requires manual execution.
+  build-lambda:
+    name: Build Lambda Package
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    needs: [backend, frontend, terraform]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build Lambda zip
+        run: bash scripts/build_lambda.sh
+
+      - name: Report package size
+        run: du -sh dist/fiscalforge-backend.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fiscalforge-backend-${{ github.sha }}
+          path: dist/fiscalforge-backend.zip
+          retention-days: 7

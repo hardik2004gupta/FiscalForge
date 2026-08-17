@@ -25,8 +25,9 @@ env/
 .terraform/
 *.tfstate
 *.tfstate.backup
-*.tfvars
-.terraform.lock.hcl
+terraform.tfvars
+# .terraform.lock.hcl is intentionally tracked for reproducible provider versions
+# *.tfvars.example files are intentionally tracked (no secrets)
 
 # Node / Next.js
 node_modules/

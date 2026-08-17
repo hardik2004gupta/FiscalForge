@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User } from 'lucide-react'
+import { Send, Bot, User, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { queryAdvisor } from '@/lib/api'
+import { queryAdvisor, ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
+
+const ADVISOR_UNAVAILABLE =
+  'The AI advisor is temporarily unavailable. Your AWS cost and resource data are still available in the Dashboard, Costs, and Resources sections.'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -63,7 +66,9 @@ export function AdvisorChat({ pendingMessage, onPendingMessageConsumed }: Adviso
       }
       setMessages((prev) => [...prev, assistantMsg])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get response.')
+      const isAdvisorDown =
+        err instanceof ApiError && (err.statusCode === 503 || err.code === 'AGENT_ERROR')
+      setError(isAdvisorDown ? ADVISOR_UNAVAILABLE : (err instanceof Error ? err.message : 'Failed to get response.'))
     } finally {
       setIsLoading(false)
       inputRef.current?.focus()
@@ -103,8 +108,9 @@ export function AdvisorChat({ pendingMessage, onPendingMessageConsumed }: Adviso
         )}
 
         {error && (
-          <div className="rounded-md bg-destructive/8 px-3 py-2 text-xs text-destructive">
-            {error}
+          <div className="flex items-start gap-2 rounded-md bg-warning/8 border border-warning/20 px-3 py-2.5">
+            <AlertCircle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+            <p className="text-xs text-foreground leading-relaxed">{error}</p>
           </div>
         )}
 
