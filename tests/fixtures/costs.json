@@ -1,0 +1,22 @@
+{
+  "total_cost": 4281.62,
+  "previous_cost": 3810.41,
+  "change_percent": 12.36,
+  "daily_costs": [
+    {"date": "2024-01-01", "cost": 138.76},
+    {"date": "2024-01-02", "cost": 141.22},
+    {"date": "2024-01-03", "cost": 143.81},
+    {"date": "2024-01-04", "cost": 139.54},
+    {"date": "2024-01-05", "cost": 142.08},
+    {"date": "2024-01-06", "cost": 144.91},
+    {"date": "2024-01-07", "cost": 138.99}
+  ],
+  "services": [
+    {"name": "Amazon EC2", "cost": 1820.10},
+    {"name": "Amazon RDS", "cost": 920.20},
+    {"name": "Amazon S3", "cost": 341.45},
+    {"name": "AWS Lambda", "cost": 112.33},
+    {"name": "Amazon CloudFront", "cost": 287.54},
+    {"name": "Other", "cost": 800.00}
+  ]
+}

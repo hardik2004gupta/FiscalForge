@@ -1,0 +1,22 @@
+# FiscalForge Backend Dependencies
+# Install with: pip install -r requirements.txt
+
+# ─── AWS ─────────────────────────────────────────────────────────────────────
+boto3>=1.34.0
+
+# ─── Data Validation ─────────────────────────────────────────────────────────
+pydantic>=2.0.0
+
+# ─── AI Agent ────────────────────────────────────────────────────────────────
+langgraph>=0.1.0
+langchain-openai>=0.1.0
+openai>=1.0.0
+
+# ─── Testing ─────────────────────────────────────────────────────────────────
+pytest>=8.0.0
+moto[ec2,rds,s3,ce,cloudwatch]>=5.0.0
+
+# ─── Code Quality ────────────────────────────────────────────────────────────
+ruff>=0.4.0
+mypy>=1.10.0
+boto3-stubs[ce,ec2,rds,s3,cloudwatch]>=1.34.0
