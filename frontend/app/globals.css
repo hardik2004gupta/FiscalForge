@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Backgrounds ─────────────────────────────────────────── */
+    --background: 220 22% 97%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 38% 10%;
+    --muted: 220 16% 94%;
+    --accent: 220 16% 94%;
+    --accent-foreground: 224 38% 10%;
+
+    /* ── Text ────────────────────────────────────────────────── */
+    --foreground: 224 38% 10%;
+    --muted-foreground: 220 11% 46%;
+
+    /* ── Borders ─────────────────────────────────────────────── */
+    --border: 220 16% 90%;
+
+    /* ── Primary — refined indigo ────────────────────────────── */
+    --primary: 237 76% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    /* ── Semantic states ─────────────────────────────────────── */
+    --destructive: 0 68% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 70% 28%;
+    --warning: 38 88% 40%;
+
+    /* ── Radius ──────────────────────────────────────────────── */
+    --radius: 0.5rem;
+
+    /* ── Chart palette ───────────────────────────────────────── */
+    --chart-1: 237 76% 54%;
+    --chart-2: 200 98% 44%;
+    --chart-3: 170 76% 34%;
+    --chart-4: 142 68% 40%;
+    --chart-5: 38 90% 50%;
+    --chart-6: 0 68% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Extremely subtle top bloom — creates depth without visible gradient */
+    background-image: radial-gradient(
+      ellipse 140% 45% at 50% -8%,
+      hsl(237 100% 99.2%) 0%,
+      transparent 68%
+    );
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI',
+      'Helvetica Neue', Arial, sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Smooth focus rings throughout */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+}
+
+@layer utilities {
+  /* Tabular numbers — must be applied to all financial values */
+  .font-numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Typography balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* ── Shadow system ───────────────────────────────────────────
+     Three levels: card (resting), hover, dialog.
+     Kept extremely restrained — this is a financial product.   */
+  .shadow-card {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 1px 8px rgba(0, 0, 0, 0.03);
+  }
+  .shadow-card-hover {
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-dialog {
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.12),
+      0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Sidebar shadow — rightward only */
+  .shadow-sidebar {
+    box-shadow: 1px 0 0 hsl(var(--border));
+  }
+}
