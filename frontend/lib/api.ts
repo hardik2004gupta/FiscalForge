@@ -4,8 +4,6 @@
  * All frontend components must call these functions.
  * Direct fetch() calls inside components are prohibited.
  * See CLAUDE.md §7 Frontend Contract.
- *
- * Phase 3: implement HTTP calls to the API Gateway endpoint.
  */
 
 import { config } from './config'
@@ -25,17 +23,32 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Core fetch wrapper — adds base URL, handles error responses.
- * Phase 3: implement with error parsing and retry logic.
- */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  // Phase 3: implement
-  //   const url = `${config.apiUrl}${path}`
-  //   const res = await fetch(url, { ...options })
-  //   if (!res.ok) { ... throw ApiError ... }
-  //   return res.json() as T
-  throw new ApiError('NOT_IMPLEMENTED', `API client not yet implemented: ${path}`, 501)
+  const base = config.apiUrl ?? ''
+  const url = `${base}${path}`
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+  if (!res.ok) {
+    let errorCode = 'UNKNOWN_ERROR'
+    let errorMessage = `Request failed with status ${res.status}`
+    try {
+      const body = (await res.json()) as { error?: string; message?: string }
+      errorCode = body.error ?? errorCode
+      errorMessage = body.message ?? errorMessage
+    } catch {
+      // body could not be parsed — keep defaults
+    }
+    throw new ApiError(errorCode, errorMessage, res.status)
+  }
+
+  return res.json() as Promise<T>
 }
 
 export async function getCosts(): Promise<CostSummary> {

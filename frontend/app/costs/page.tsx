@@ -1,30 +1,83 @@
-/**
- * Costs — detailed cost analytics page.
- *
- * Phase 3: implement with:
- *   - Date range filter (7d / 30d / 90d)
- *   - Metric cards: Current Period, Previous Period, Change %, Daily Average, Projected Monthly
- *   - Chart 1: Daily AWS spending (line chart)
- *   - Chart 2: Cost by service (bar chart)
- *   - Chart 3: Cost change by service vs. previous period (horizontal bar)
- *
- * Data source: getCosts() from lib/api.ts
- */
-export default function CostsPage() {
-  return (
-    <main className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Cost Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Detailed spending breakdown and period comparison
-        </p>
-      </div>
+'use client'
 
-      <div className="rounded-lg border border-border bg-card p-8 flex items-center justify-center">
-        <p className="text-muted-foreground text-sm">
-          Phase 3: cost analytics with charts coming soon.
-        </p>
-      </div>
-    </main>
+import { useState, useEffect, useCallback } from 'react'
+import { DollarSign, TrendingUp } from 'lucide-react'
+import { AppShell } from '@/components/layout/AppShell'
+import { TopBar } from '@/components/layout/TopBar'
+import { KpiCard } from '@/components/dashboard/KpiCard'
+import { SpendingTrend } from '@/components/costs/SpendingTrend'
+import { CostTable } from '@/components/costs/CostTable'
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
+import { getCosts } from '@/lib/api'
+import { formatCurrency, formatPercentage } from '@/lib/utils'
+import type { CostSummary } from '@/types/cost'
+
+export default function CostsPage() {
+  const [data, setData] = useState<CostSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else { setLoading(true); setError(null) }
+    try {
+      setData(await getCosts())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load cost data.')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }, [])
+
+  useEffect(() => { void load() }, [load])
+
+  const isIncrease = (data?.change_percent ?? 0) > 0
+
+  return (
+    <AppShell>
+      <TopBar
+        title="Cost Analytics"
+        subtitle="Detailed AWS spending breakdown"
+        onRefresh={() => void load(true)}
+        isRefreshing={refreshing}
+      />
+
+      <main className="flex-1 p-6 space-y-6">
+        {loading ? (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <SkeletonCard /><SkeletonCard />
+            </div>
+            <SkeletonTable rows={8} />
+          </>
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => void load()} />
+        ) : data ? (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <KpiCard
+                label="Total Spend"
+                value={formatCurrency(data.total_cost)}
+                change={`${formatPercentage(data.change_percent)} vs previous period`}
+                changePositive={isIncrease}
+                icon={DollarSign}
+              />
+              <KpiCard
+                label="Previous Period"
+                value={formatCurrency(data.previous_cost)}
+                change={`Difference: ${formatCurrency(Math.abs(data.total_cost - data.previous_cost))}`}
+                icon={TrendingUp}
+              />
+            </div>
+
+            <SpendingTrend dailyCosts={data.daily_costs} />
+            <CostTable services={data.services} totalCost={data.total_cost} />
+          </>
+        ) : null}
+      </main>
+    </AppShell>
   )
 }

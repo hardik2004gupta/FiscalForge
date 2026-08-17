@@ -1,15 +1,24 @@
-/**
- * Shared formatting and utility functions.
- * Used across all pages and components.
- */
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
-export function formatCurrency(amount: number, currency = 'USD'): string {
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs))
+}
+
+export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)
+}
+
+export function formatCurrencyCompact(amount: number): string {
+  if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}k`
+  }
+  return `$${amount.toFixed(0)}`
 }
 
 export function formatPercentage(value: number, decimals = 1): string {
@@ -26,12 +35,11 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(value)
 }
 
-/** Merge Tailwind class names, filtering falsy values. */
-export function cn(...classes: (string | undefined | false | null)[]): string {
-  return classes.filter(Boolean).join(' ')
-}
-
-/** Return true if a cost change percentage is positive (an increase). */
 export function isIncrease(changePercent: number): boolean {
   return changePercent > 0
+}
+
+export function formatDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
