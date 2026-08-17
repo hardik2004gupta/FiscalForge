@@ -1,4 +1,5 @@
 """Error codes and Lambda error response builder."""
+
 from __future__ import annotations
 
 import json

@@ -8,6 +8,7 @@ See CLAUDE.md §11 Agentic AI Contract and §12 AI Safety Contract.
 Tool inputs come from the same AWS adapters and optimization engine used
 by the API endpoints, so the agent always reasons over consistent data.
 """
+
 from __future__ import annotations
 
 
@@ -16,20 +17,41 @@ def get_cost_summary() -> dict:
     Tool: get_cost_summary
     Returns current AWS spending vs. previous period, daily costs,
     and per-service cost breakdown.
-
-    Phase 2: call aws.cost_explorer.get_cost_summary() and return as dict.
     """
-    raise NotImplementedError("Phase 2: cost summary tool")
+    from backend.aws.cost_explorer import get_cost_summary as _get_cost_summary
+
+    return _get_cost_summary().model_dump()
 
 
 def get_resources() -> dict:
     """
     Tool: get_resources
     Returns EC2 instances (with CPU utilization), RDS databases, and S3 buckets.
-
-    Phase 2: call aws.ec2, aws.rds, aws.s3 adapters and return as dict.
     """
-    raise NotImplementedError("Phase 2: resources tool")
+    from backend.aws.cloudwatch import get_ec2_cpu_utilization
+    from backend.aws.ec2 import get_ec2_instances
+    from backend.aws.rds import get_rds_instances
+    from backend.aws.s3 import get_s3_buckets
+    from backend.models import ResourceInventory
+
+    ec2_instances = get_ec2_instances()
+    enriched_ec2 = [
+        instance.model_copy(
+            update={
+                "utilization": (
+                    get_ec2_cpu_utilization(instance.id) if instance.state == "running" else None
+                )
+            }
+        )
+        for instance in ec2_instances
+    ]
+
+    inventory = ResourceInventory(
+        ec2=enriched_ec2,
+        rds=get_rds_instances(),
+        s3=get_s3_buckets(),
+    )
+    return inventory.model_dump()
 
 
 def get_recommendations() -> dict:
@@ -37,10 +59,25 @@ def get_recommendations() -> dict:
     Tool: get_recommendations
     Returns deterministic optimization findings from the rules engine,
     including severity, reason, and estimated monthly savings per finding.
-
-    Phase 2: call optimization.engine.run_optimization() and return as dict.
     """
-    raise NotImplementedError("Phase 2: recommendations tool")
+    from backend.aws.cloudwatch import get_ec2_cpu_utilization
+    from backend.aws.ec2 import get_ec2_instances
+    from backend.aws.rds import get_rds_instances
+    from backend.aws.s3 import get_s3_buckets
+    from backend.models import ResourceInventory
+    from backend.optimization.engine import run_optimization
+
+    ec2_instances = get_ec2_instances()
+    cpu_utilizations: dict[str, float | None] = {
+        inst.id: (get_ec2_cpu_utilization(inst.id) if inst.state == "running" else None)
+        for inst in ec2_instances
+    }
+    inventory = ResourceInventory(
+        ec2=ec2_instances,
+        rds=get_rds_instances(),
+        s3=get_s3_buckets(),
+    )
+    return run_optimization(inventory, cpu_utilizations).model_dump()
 
 
 # ─── Safety note ─────────────────────────────────────────────────────────────

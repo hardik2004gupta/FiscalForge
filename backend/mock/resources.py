@@ -7,6 +7,7 @@ Includes instances that deliberately trigger optimization rules:
 - i-0d4e... → stopped → no recommendations
 - fiscalforge-logs-archive → large bucket → triggers S3 rule
 """
+
 from __future__ import annotations
 
 from backend.models import EC2Instance, RDSInstance, ResourceInventory, S3Bucket
@@ -23,7 +24,7 @@ def get_mock_resource_inventory() -> ResourceInventory:
                 region="us-east-1",
                 launch_time="2023-11-01T08:00:00Z",
                 estimated_cost=60.74,
-                utilization=8.2,      # Underutilized — triggers EC2_UNDERUTILIZED + EC2_RIGHTSIZING
+                utilization=8.2,  # Underutilized — triggers EC2_UNDERUTILIZED + EC2_RIGHTSIZING
             ),
             EC2Instance(
                 id="i-0b2c3d4e5f6789012",
@@ -32,7 +33,7 @@ def get_mock_resource_inventory() -> ResourceInventory:
                 region="us-east-1",
                 launch_time="2023-10-15T14:30:00Z",
                 estimated_cost=140.16,
-                utilization=6.5,      # Underutilized — triggers EC2_UNDERUTILIZED + EC2_RIGHTSIZING
+                utilization=6.5,  # Underutilized — triggers EC2_UNDERUTILIZED + EC2_RIGHTSIZING
             ),
             EC2Instance(
                 id="i-0c3d4e5f678901234",
@@ -41,7 +42,7 @@ def get_mock_resource_inventory() -> ResourceInventory:
                 region="us-east-1",
                 launch_time="2024-01-10T09:15:00Z",
                 estimated_cost=30.37,
-                utilization=52.4,     # Healthy utilization — no recommendations
+                utilization=52.4,  # Healthy utilization — no recommendations
             ),
             EC2Instance(
                 id="i-0d4e5f67890123456",
@@ -50,7 +51,7 @@ def get_mock_resource_inventory() -> ResourceInventory:
                 region="us-west-2",
                 launch_time="2023-12-01T11:00:00Z",
                 estimated_cost=0.0,
-                utilization=None,     # Stopped — no recommendations
+                utilization=None,  # Stopped — no recommendations
             ),
         ],
         rds=[
@@ -82,7 +83,7 @@ def get_mock_resource_inventory() -> ResourceInventory:
             S3Bucket(
                 name="fiscalforge-logs-archive",
                 region="us-east-1",
-                size_gb=1024.5,         # Large — triggers S3_STORAGE_OPTIMIZATION
+                size_gb=1024.5,  # Large — triggers S3_STORAGE_OPTIMIZATION
                 object_count=892100,
                 estimated_cost=23.56,
             ),

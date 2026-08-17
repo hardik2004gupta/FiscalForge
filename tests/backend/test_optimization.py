@@ -5,13 +5,12 @@ Every optimization rule must have:
   - At least one test that confirms the rule triggers (positive case)
   - At least one test that confirms the rule does NOT trigger (negative case)
 
-Phase 2: remove pytest.skip() calls as rules are implemented.
 See CLAUDE.md §10 Optimization Engine Contract.
 """
+
 from __future__ import annotations
 
 import pytest
-
 from backend.models import EC2Instance, S3Bucket
 
 
@@ -87,24 +86,34 @@ class TestEC2UnderutilizationRule:
     def test_low_cpu_running_instance_triggers_recommendation(
         self, underutilized_ec2: EC2Instance
     ) -> None:
-        """Phase 2: instance with CPU < 10% should produce EC2_UNDERUTILIZED recommendation."""
-        pytest.skip("Phase 2: implement check_ec2_underutilization()")
+        from backend.optimization.rules import check_ec2_underutilization
+
+        rec = check_ec2_underutilization(underutilized_ec2)
+        assert rec is not None
+        assert rec.type == "EC2_UNDERUTILIZED"
+        assert rec.resource_id == underutilized_ec2.id
+        assert rec.estimated_savings > 0
 
     def test_healthy_cpu_instance_produces_no_recommendation(
         self, healthy_ec2: EC2Instance
     ) -> None:
-        """Phase 2: instance with healthy CPU should return None."""
-        pytest.skip("Phase 2")
+        from backend.optimization.rules import check_ec2_underutilization
 
-    def test_stopped_instance_produces_no_recommendation(
-        self, stopped_ec2: EC2Instance
-    ) -> None:
-        """Phase 2: stopped instance should return None regardless of CPU."""
-        pytest.skip("Phase 2")
+        rec = check_ec2_underutilization(healthy_ec2)
+        assert rec is None
+
+    def test_stopped_instance_produces_no_recommendation(self, stopped_ec2: EC2Instance) -> None:
+        from backend.optimization.rules import check_ec2_underutilization
+
+        rec = check_ec2_underutilization(stopped_ec2)
+        assert rec is None
 
     def test_recommendation_severity_is_high(self, underutilized_ec2: EC2Instance) -> None:
-        """Phase 2: EC2_UNDERUTILIZED severity should be 'high'."""
-        pytest.skip("Phase 2")
+        from backend.optimization.rules import check_ec2_underutilization
+
+        rec = check_ec2_underutilization(underutilized_ec2)
+        assert rec is not None
+        assert rec.severity == "high"
 
 
 class TestEC2RightsizingRule:
@@ -113,34 +122,51 @@ class TestEC2RightsizingRule:
     def test_long_running_low_cpu_triggers_recommendation(
         self, underutilized_ec2: EC2Instance
     ) -> None:
-        """Phase 2: long-running instance with low CPU should produce EC2_RIGHTSIZING."""
-        pytest.skip("Phase 2: implement check_ec2_rightsizing()")
+        from backend.optimization.rules import check_ec2_rightsizing
 
-    def test_new_low_cpu_instance_does_not_trigger(
-        self, underutilized_ec2: EC2Instance
-    ) -> None:
-        """Phase 2: recently launched instance should not trigger rightsizing."""
-        pytest.skip("Phase 2")
+        rec = check_ec2_rightsizing(underutilized_ec2, running_days=90)
+        assert rec is not None
+        assert rec.type == "EC2_RIGHTSIZING"
+        assert rec.resource_id == underutilized_ec2.id
+
+    def test_new_low_cpu_instance_does_not_trigger(self, underutilized_ec2: EC2Instance) -> None:
+        from backend.optimization.rules import check_ec2_rightsizing
+
+        # running_days=10 is below RIGHTSIZING_MIN_RUNNING_DAYS=30
+        rec = check_ec2_rightsizing(underutilized_ec2, running_days=10)
+        assert rec is None
 
     def test_recommendation_severity_is_medium(self, underutilized_ec2: EC2Instance) -> None:
-        """Phase 2: EC2_RIGHTSIZING severity should be 'medium'."""
-        pytest.skip("Phase 2")
+        from backend.optimization.rules import check_ec2_rightsizing
+
+        rec = check_ec2_rightsizing(underutilized_ec2, running_days=90)
+        assert rec is not None
+        assert rec.severity == "medium"
 
 
 class TestS3StorageOptimizationRule:
-    """Test Rule 4: S3_STORAGE_OPTIMIZATION."""
+    """Test Rule 3: S3_STORAGE_OPTIMIZATION."""
 
     def test_large_bucket_triggers_recommendation(self, large_s3_bucket: S3Bucket) -> None:
-        """Phase 2: bucket > threshold should produce S3_STORAGE_OPTIMIZATION."""
-        pytest.skip("Phase 2: implement check_s3_storage_optimization()")
+        from backend.optimization.rules import check_s3_storage_optimization
+
+        rec = check_s3_storage_optimization(large_s3_bucket)
+        assert rec is not None
+        assert rec.type == "S3_STORAGE_OPTIMIZATION"
+        assert rec.resource_id == large_s3_bucket.name
 
     def test_small_bucket_produces_no_recommendation(self, small_s3_bucket: S3Bucket) -> None:
-        """Phase 2: small bucket should return None."""
-        pytest.skip("Phase 2")
+        from backend.optimization.rules import check_s3_storage_optimization
+
+        rec = check_s3_storage_optimization(small_s3_bucket)
+        assert rec is None
 
     def test_recommendation_severity_is_low(self, large_s3_bucket: S3Bucket) -> None:
-        """Phase 2: S3_STORAGE_OPTIMIZATION severity should be 'low'."""
-        pytest.skip("Phase 2")
+        from backend.optimization.rules import check_s3_storage_optimization
+
+        rec = check_s3_storage_optimization(large_s3_bucket)
+        assert rec is not None
+        assert rec.severity == "low"
 
 
 class TestRecommendationStructure:
@@ -148,16 +174,16 @@ class TestRecommendationStructure:
 
     def test_recommendation_requires_all_fields(self) -> None:
         """Recommendation should reject construction with missing required fields."""
-        from pydantic import ValidationError
         from backend.models import Recommendation
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             Recommendation()  # type: ignore[call-arg]
 
     def test_recommendation_type_must_be_valid(self) -> None:
         """Recommendation.type must be a recognized RecommendationType value."""
-        from pydantic import ValidationError
         from backend.models import Recommendation
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             Recommendation(
@@ -171,8 +197,8 @@ class TestRecommendationStructure:
 
     def test_recommendation_severity_must_be_valid(self) -> None:
         """Recommendation.severity must be high, medium, or low."""
-        from pydantic import ValidationError
         from backend.models import Recommendation
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             Recommendation(

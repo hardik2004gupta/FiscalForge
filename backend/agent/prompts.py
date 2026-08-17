@@ -1,4 +1,5 @@
 """System prompt for the FiscalForge AI advisor agent."""
+
 from __future__ import annotations
 
 SYSTEM_PROMPT = """You are FiscalForge Advisor, an AI assistant specializing in AWS cost optimization.

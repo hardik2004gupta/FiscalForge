@@ -4,6 +4,7 @@ Realistic mock CloudWatch metrics for local development and testing.
 Maps instance IDs to CPU utilization values that match mock/resources.py.
 Kept in sync manually — if resources.py changes, update this file.
 """
+
 from __future__ import annotations
 
 
@@ -15,8 +16,8 @@ def get_mock_cpu_utilization(instance_id: str) -> float | None:
     matching the behavior of the real CloudWatch adapter.
     """
     _utilization_map: dict[str, float] = {
-        "i-0a1b2c3d4e5f67890": 8.2,   # underutilized
-        "i-0b2c3d4e5f6789012": 6.5,   # underutilized
+        "i-0a1b2c3d4e5f67890": 8.2,  # underutilized
+        "i-0b2c3d4e5f6789012": 6.5,  # underutilized
         "i-0c3d4e5f678901234": 52.4,  # healthy
         # i-0d4e5f67890123456 is stopped — returns None (not in map)
     }

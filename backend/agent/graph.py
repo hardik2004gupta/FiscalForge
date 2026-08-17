@@ -11,12 +11,12 @@ Agent flow:
         → tool execution → AWS-derived structured data
         → LLM reasoning
         → grounded natural-language response
-
-Phase 2: implement using LangGraph create_react_agent or StateGraph.
 """
+
 from __future__ import annotations
 
 from backend.agent.prompts import SYSTEM_PROMPT
+from backend.config import get_config
 
 
 def create_advisor_agent() -> object:
@@ -25,10 +25,39 @@ def create_advisor_agent() -> object:
 
     Binds the three read-only tools to the configured OpenAI model.
     Returns a compiled LangGraph runnable.
-
-    Phase 2: implement with LangGraph + ChatOpenAI.
     """
-    raise NotImplementedError("Phase 2: LangGraph agent")
+    from langchain_core.tools import tool
+    from langchain_openai import ChatOpenAI
+    from langgraph.prebuilt import create_react_agent
+
+    import backend.agent.tools as _tools
+
+    config = get_config()
+
+    @tool
+    def get_cost_summary() -> dict:
+        """Returns current AWS spending vs. previous period, daily costs, and per-service breakdown."""
+        return _tools.get_cost_summary()
+
+    @tool
+    def get_resources() -> dict:
+        """Returns EC2 instances (with CPU utilization), RDS databases, and S3 buckets."""
+        return _tools.get_resources()
+
+    @tool
+    def get_recommendations() -> dict:
+        """Returns deterministic optimization findings with severity and estimated monthly savings."""
+        return _tools.get_recommendations()
+
+    llm = ChatOpenAI(
+        model=config.openai_model,
+        api_key=config.openai_api_key,
+    )
+
+    return create_react_agent(
+        llm,
+        tools=[get_cost_summary, get_resources, get_recommendations],
+    )
 
 
 def run_advisor(message: str) -> str:
@@ -40,7 +69,22 @@ def run_advisor(message: str) -> str:
 
     Returns:
         The agent's response, grounded in AWS-derived data.
-
-    Phase 2: invoke the compiled agent graph.
     """
-    raise NotImplementedError("Phase 2: agent invocation")
+    from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
+    agent = create_advisor_agent()
+    result = agent.invoke(
+        {
+            "messages": [
+                SystemMessage(content=SYSTEM_PROMPT),
+                HumanMessage(content=message),
+            ]
+        }
+    )
+
+    messages = result.get("messages", [])
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and msg.content:
+            return str(msg.content)
+
+    return "I was unable to process your request."

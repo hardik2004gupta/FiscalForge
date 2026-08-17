@@ -6,6 +6,7 @@ Used when FISCALFORGE_MOCK_AWS=true.
 
 Values are representative of a small AWS account with EC2, RDS, S3, and Lambda.
 """
+
 from __future__ import annotations
 
 from backend.models import CostSummary, DailyCost, ServiceCost

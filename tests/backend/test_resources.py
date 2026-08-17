@@ -1,8 +1,7 @@
 """
 Tests for resource inventory normalization and field mapping.
-
-Phase 2: remove pytest.skip() calls as AWS adapters are implemented.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -13,8 +12,8 @@ class TestEC2Models:
 
     def test_ec2_instance_requires_all_fields(self) -> None:
         """EC2Instance should reject construction with missing required fields."""
-        from pydantic import ValidationError
         from backend.models import EC2Instance
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             EC2Instance()  # type: ignore[call-arg]
@@ -35,7 +34,8 @@ class TestEC2Models:
 
         inventory = get_mock_resource_inventory()
         underutilized = [
-            i for i in inventory.ec2
+            i
+            for i in inventory.ec2
             if i.utilization is not None and i.utilization < CPU_UNDERUTILIZATION_THRESHOLD
         ]
         assert len(underutilized) >= 2, "Mock data needs underutilized instances for rule testing"
@@ -46,8 +46,8 @@ class TestRDSModels:
 
     def test_rds_instance_requires_all_fields(self) -> None:
         """RDSInstance should reject construction with missing required fields."""
-        from pydantic import ValidationError
         from backend.models import RDSInstance
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             RDSInstance()  # type: ignore[call-arg]
@@ -66,8 +66,8 @@ class TestS3Models:
 
     def test_s3_bucket_requires_all_fields(self) -> None:
         """S3Bucket should reject construction with missing required fields."""
-        from pydantic import ValidationError
         from backend.models import S3Bucket
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             S3Bucket()  # type: ignore[call-arg]
@@ -83,16 +83,37 @@ class TestS3Models:
 
 
 class TestResourceInventoryNormalization:
-    """Test ResourceInventory adapter normalization (Phase 2)."""
+    """Test ResourceInventory adapter normalization in mock mode."""
 
     def test_ec2_normalization_from_boto3_response(self) -> None:
-        """Phase 2: EC2 adapter should normalize boto3 describe_instances response."""
-        pytest.skip("Phase 2: implement EC2 adapter")
+        """EC2 adapter (mock mode) should return correctly structured instances."""
+        from backend.aws.ec2 import get_ec2_instances
+
+        instances = get_ec2_instances()
+        assert len(instances) > 0
+        for instance in instances:
+            assert instance.id.startswith("i-")
+            assert instance.state in ("running", "stopped", "pending", "terminated")
+            assert instance.estimated_cost >= 0
 
     def test_rds_normalization_from_boto3_response(self) -> None:
-        """Phase 2: RDS adapter should normalize boto3 describe_db_instances response."""
-        pytest.skip("Phase 2")
+        """RDS adapter (mock mode) should return correctly structured instances."""
+        from backend.aws.rds import get_rds_instances
+
+        instances = get_rds_instances()
+        assert len(instances) > 0
+        for instance in instances:
+            assert len(instance.engine) > 0
+            assert len(instance.instance_class) > 0
+            assert instance.estimated_cost >= 0
 
     def test_s3_normalization_from_boto3_response(self) -> None:
-        """Phase 2: S3 adapter should normalize boto3 list_buckets response."""
-        pytest.skip("Phase 2")
+        """S3 adapter (mock mode) should return correctly structured buckets."""
+        from backend.aws.s3 import get_s3_buckets
+
+        buckets = get_s3_buckets()
+        assert len(buckets) > 0
+        for bucket in buckets:
+            assert len(bucket.name) > 0
+            assert bucket.size_gb >= 0
+            assert bucket.estimated_cost >= 0

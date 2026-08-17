@@ -1,4 +1,5 @@
 """Structured JSON logger — writes to stdout for CloudWatch Logs ingestion."""
+
 from __future__ import annotations
 
 import json

@@ -9,12 +9,12 @@ These Pydantic models define the contract between:
 Keep models minimal. Do not add fields not required by the API contract
 documented in CLAUDE.md §21 and docs/api-contract.md.
 """
+
 from __future__ import annotations
 
 from typing import Literal
 
 from pydantic import BaseModel, Field
-
 
 # ─── Cost Models ─────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ class DailyCost(BaseModel):
 
 
 class ServiceCost(BaseModel):
-    name: str   # AWS service display name, e.g. "Amazon EC2"
+    name: str  # AWS service display name, e.g. "Amazon EC2"
     cost: float
 
 
@@ -41,18 +41,18 @@ class CostSummary(BaseModel):
 
 
 class EC2Instance(BaseModel):
-    id: str                         # e.g. "i-0a1b2c3d4e5f67890"
-    type: str                       # e.g. "t3.large"
-    state: str                      # running | stopped | pending | terminated
+    id: str  # e.g. "i-0a1b2c3d4e5f67890"
+    type: str  # e.g. "t3.large"
+    state: str  # running | stopped | pending | terminated
     region: str
     launch_time: str | None = None  # ISO 8601 UTC
-    estimated_cost: float           # monthly USD estimate
+    estimated_cost: float  # monthly USD estimate
     utilization: float | None = None  # average CPU % over evaluation period
 
 
 class RDSInstance(BaseModel):
-    id: str             # DB identifier
-    engine: str         # e.g. "postgres", "mysql"
+    id: str  # DB identifier
+    engine: str  # e.g. "postgres", "mysql"
     instance_class: str  # e.g. "db.t3.medium"
     status: str
     region: str
@@ -91,7 +91,7 @@ class Recommendation(BaseModel):
     resource_id: str
     type: RecommendationType
     severity: SeverityLevel
-    reason: str            # Human-readable; shown in the UI and passed to the AI
+    reason: str  # Human-readable; shown in the UI and passed to the AI
     estimated_savings: float  # Monthly USD
 
 
@@ -129,5 +129,5 @@ class EC2StopResponse(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    error: str    # ErrorCode enum value
+    error: str  # ErrorCode enum value
     message: str

@@ -227,6 +227,50 @@ terraform/
 
 ---
 
+## Phase 2 Architectural Decisions
+
+The following decisions were made during Phase 2 implementation and are now
+part of the authoritative architecture:
+
+### CloudWatch Evaluation Window: 14 Days
+
+EC2 CPU utilization is measured over a **14-day trailing window** (not 7 days).
+
+- **Why:** A 14-day window produces a more stable signal, reducing false positives
+  from short-term CPU spikes (e.g., a weekly batch job would be missed in 7 days).
+- **Where:** `backend/aws/cloudwatch.py` → `_EC2_CPU_EVALUATION_DAYS = 14`
+- **Constant:** `get_ec2_cpu_utilization(days=14)` is the default call.
+
+### EC2 Rightsizing Threshold: 30 Days Running
+
+An EC2 instance must have been running for at least **30 days** before the
+`EC2_RIGHTSIZING` rule fires.
+
+- **Why:** Instances under 30 days are still in their initial sizing period.
+  Recommending a downsize before the workload is established leads to churn.
+- **Where:** `backend/optimization/rules.py` → `RIGHTSIZING_MIN_RUNNING_DAYS = 30`
+
+### Cost Estimations
+
+Monthly cost estimates are derived from On-Demand pricing in us-east-1:
+- EC2: lookup table in `backend/aws/ec2.py` (`_INSTANCE_MONTHLY_COST`)
+- RDS: lookup table in `backend/aws/rds.py` (`_RDS_MONTHLY_COST`)
+- S3: `$0.023/GB/month` (`_S3_COST_PER_GB` in `backend/aws/s3.py`)
+
+Estimated savings are approximate:
+- EC2_UNDERUTILIZED: 50% of monthly instance cost (stop the instance)
+- EC2_RIGHTSIZING: 30% of monthly instance cost (next smaller type)
+- S3_STORAGE_OPTIMIZATION: 40% of S3 cost (Intelligent-Tiering)
+
+### Mock Mode Boundary
+
+Mock data is injected at the **adapter layer** only. Business logic
+(optimization rules, handler routing, agent tools) is identical in mock
+and real modes. The config singleton (`backend/config.py`) is reset between
+tests via `reset_config()` to pick up monkeypatched env vars.
+
+---
+
 ## CI Pipeline
 
 ```
