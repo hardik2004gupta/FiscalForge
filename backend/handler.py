@@ -18,7 +18,7 @@ See CLAUDE.md §3 Core Architectural Invariant.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Callable
 
 from backend.config import get_config
 from backend.errors import ErrorCode, error_response, ok_response
@@ -51,7 +51,8 @@ def _route(
     config: Any,
 ) -> dict[str, Any]:
     """Dispatch to the correct handler by method + path."""
-    routes: dict[tuple[str, str], Any] = {
+    RouteHandler = Callable[[dict[str, Any], Any], dict[str, Any]]
+    routes: dict[tuple[str, str], RouteHandler] = {
         ("GET", "/api/costs"): _handle_costs,
         ("GET", "/api/resources"): _handle_resources,
         ("GET", "/api/recommendations"): _handle_recommendations,

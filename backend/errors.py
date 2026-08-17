@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from enum import StrEnum
+from typing import Any
 
 
 class ErrorCode(StrEnum):
@@ -18,7 +19,7 @@ def error_response(
     code: ErrorCode,
     message: str,
     status_code: int = 500,
-) -> dict:
+) -> dict[str, Any]:
     """Build a consistent Lambda proxy error response.
 
     Never expose raw boto3 exceptions, stack traces, or credentials.
@@ -30,7 +31,7 @@ def error_response(
     }
 
 
-def ok_response(body: dict, status_code: int = 200) -> dict:
+def ok_response(body: dict[str, Any], status_code: int = 200) -> dict[str, Any]:
     """Build a successful Lambda proxy response."""
     return {
         "statusCode": status_code,

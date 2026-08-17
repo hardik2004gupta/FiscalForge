@@ -11,8 +11,10 @@ by the API endpoints, so the agent always reasons over consistent data.
 
 from __future__ import annotations
 
+from typing import Any
 
-def get_cost_summary() -> dict:
+
+def get_cost_summary() -> dict[str, Any]:
     """
     Tool: get_cost_summary
     Returns current AWS spending vs. previous period, daily costs,
@@ -23,7 +25,7 @@ def get_cost_summary() -> dict:
     return _get_cost_summary().model_dump()
 
 
-def get_resources() -> dict:
+def get_resources() -> dict[str, Any]:
     """
     Tool: get_resources
     Returns EC2 instances (with CPU utilization), RDS databases, and S3 buckets.
@@ -54,7 +56,7 @@ def get_resources() -> dict:
     return inventory.model_dump()
 
 
-def get_recommendations() -> dict:
+def get_recommendations() -> dict[str, Any]:
     """
     Tool: get_recommendations
     Returns deterministic optimization findings from the rules engine,
