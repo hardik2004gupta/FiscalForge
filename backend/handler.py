@@ -18,7 +18,8 @@ See CLAUDE.md §3 Core Architectural Invariant.
 from __future__ import annotations
 
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from backend.config import get_config
 from backend.errors import ErrorCode, error_response, ok_response

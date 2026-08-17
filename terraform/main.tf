@@ -104,6 +104,15 @@ resource "aws_apigatewayv2_stage" "fiscalforge_default" {
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.fiscalforge_lambda.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      routeKey       = "$context.routeKey"
+      status         = "$context.status"
+      responseLength = "$context.responseLength"
+      durationMs     = "$context.responseLatency"
+      sourceIp       = "$context.identity.sourceIp"
+      errorMessage   = "$context.error.message"
+    })
   }
 }
 
