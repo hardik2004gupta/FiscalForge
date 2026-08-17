@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 22% 97%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 38% 10%;
+    --muted: 220 16% 94%;
+    --foreground: 224 38% 10%;
+    --muted-foreground: 220 11% 46%;
+    --border: 220 16% 90%;
+    --primary: 237 76% 54%;
+    --primary-foreground: 0 0% 100%;
+    --destructive: 0 68% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 70% 28%;
+    --warning: 38 88% 40%;
+    --radius: 0.5rem;
+    --chart-1: 237 76% 54%;
+    --chart-2: 200 98% 44%;
+    --chart-3: 170 76% 34%;
+    --chart-4: 142 68% 40%;
+    --chart-5: 38 90% 50%;
+  }
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image: radial-gradient(
+      ellipse 140% 45% at 50% -8%,
+      hsl(237 100% 99.2%) 0%,
+      transparent 68%
+    );
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI',
+      'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+}
