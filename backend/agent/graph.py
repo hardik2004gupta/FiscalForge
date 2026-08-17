@@ -15,11 +15,13 @@ Agent flow:
 
 from __future__ import annotations
 
+from typing import Any
+
 from backend.agent.prompts import SYSTEM_PROMPT
 from backend.config import get_config
 
 
-def create_advisor_agent() -> object:
+def create_advisor_agent() -> Any:
     """
     Build the FiscalForge LangGraph advisor agent.
 
@@ -29,29 +31,30 @@ def create_advisor_agent() -> object:
     from langchain_core.tools import tool
     from langchain_openai import ChatOpenAI
     from langgraph.prebuilt import create_react_agent
+    from pydantic import SecretStr
 
     import backend.agent.tools as _tools
 
     config = get_config()
 
     @tool
-    def get_cost_summary() -> dict:
+    def get_cost_summary() -> dict[str, Any]:
         """Returns current AWS spending vs. previous period, daily costs, and per-service breakdown."""
         return _tools.get_cost_summary()
 
     @tool
-    def get_resources() -> dict:
+    def get_resources() -> dict[str, Any]:
         """Returns EC2 instances (with CPU utilization), RDS databases, and S3 buckets."""
         return _tools.get_resources()
 
     @tool
-    def get_recommendations() -> dict:
+    def get_recommendations() -> dict[str, Any]:
         """Returns deterministic optimization findings with severity and estimated monthly savings."""
         return _tools.get_recommendations()
 
     llm = ChatOpenAI(
         model=config.openai_model,
-        api_key=config.openai_api_key,
+        api_key=SecretStr(config.openai_api_key),
     )
 
     return create_react_agent(

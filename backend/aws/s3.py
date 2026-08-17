@@ -60,7 +60,7 @@ def get_s3_buckets(
 
         try:
             loc = client.get_bucket_location(Bucket=name)
-            region = loc.get("LocationConstraint") or "us-east-1"
+            region: str = str(loc.get("LocationConstraint") or "us-east-1")
         except (BotoCoreError, ClientError):
             region = config.aws_region
 

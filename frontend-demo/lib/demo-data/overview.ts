@@ -1,0 +1,15 @@
+export const DEMO_OVERVIEW = {
+  total_cost: 18426.72,
+  previous_cost: 16952.41,
+  change_percent: 8.7,
+  potential_savings: 3284.0,
+  savings_count: 17,
+  resources: { ec2: 42, rds: 8, s3: 88, total: 138 },
+  environment: 'Production',
+  account_id: '7421-****-****-9184',
+  region: 'us-east-1',
+  status: 'Operational',
+  last_sync: '2 minutes ago',
+  api_error_rate: 0.02,
+  lambda_p95_ms: 412,
+} as const
