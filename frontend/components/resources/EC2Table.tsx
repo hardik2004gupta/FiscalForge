@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StopInstanceDialog } from './StopInstanceDialog'
 import { formatCurrency } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import type { EC2Instance } from '@/types/resource'
 
 interface EC2TableProps {
@@ -26,54 +27,62 @@ export function EC2Table({ instances }: EC2TableProps) {
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="p-5 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground">EC2 Instances</h3>
-          <p className="text-xs text-muted-foreground">{instances.length} instance{instances.length !== 1 ? 's' : ''}</p>
+      <div className="rounded-lg border border-border bg-card overflow-hidden shadow-card">
+        <div className="px-5 py-4 border-b border-border">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
+            EC2 Instances
+          </p>
+          <p className="text-sm font-medium text-foreground">
+            {instances.length} instance{instances.length !== 1 ? 's' : ''}
+          </p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-border bg-muted/40">
-                {['Instance ID', 'Type', 'State', 'Region', 'CPU Util.', 'Est. Cost', ''].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                ))}
+              <tr className="border-b border-border bg-muted/30">
+                {['Instance ID', 'Type', 'State', 'Region', 'CPU Utilization', 'Est. Cost', ''].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-3 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {displayInstances.map((inst) => (
-                <tr key={inst.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-5 py-3 font-mono text-xs text-foreground">{inst.id}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{inst.type}</td>
-                  <td className="px-5 py-3">
+                <tr key={inst.id} className="hover:bg-muted/20 transition-colors group">
+                  <td className="px-5 py-3.5 font-mono text-xs font-semibold text-foreground">
+                    {inst.id}
+                  </td>
+                  <td className="px-5 py-3.5 text-xs text-muted-foreground">{inst.type}</td>
+                  <td className="px-5 py-3.5">
                     <StateBadge state={inst.state} />
                   </td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{inst.region}</td>
-                  <td className="px-5 py-3 font-numeric text-xs text-foreground">
+                  <td className="px-5 py-3.5 text-xs text-muted-foreground">{inst.region}</td>
+                  <td className="px-5 py-3.5">
                     {inst.utilization != null ? (
                       <UtilBar value={inst.utilization} />
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3 font-numeric text-xs text-foreground">
+                  <td className="px-5 py-3.5 font-numeric text-xs font-semibold text-foreground">
                     {inst.estimated_cost != null ? formatCurrency(inst.estimated_cost) + '/mo' : '—'}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     {inst.state === 'running' && !stoppedIds.has(inst.id) && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setStopTarget(inst.id)}
-                        className="text-destructive border-destructive/30 hover:bg-destructive/8"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 text-[10px] text-destructive border-destructive/30 hover:bg-destructive/8 hover:border-destructive/50"
                       >
-                        <Square className="h-3 w-3 mr-1" />
+                        <Square className="h-2.5 w-2.5 mr-1" />
                         Stop
                       </Button>
                     )}
@@ -102,13 +111,21 @@ function StateBadge({ state }: { state: string }) {
 }
 
 function UtilBar({ value }: { value: number }) {
-  const color = value < 10 ? 'bg-destructive' : value < 50 ? 'bg-warning' : 'bg-success'
+  const color =
+    value < 10
+      ? 'bg-destructive'
+      : value < 50
+        ? 'bg-warning'
+        : 'bg-success'
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
+    <div className="flex items-center gap-2.5">
+      <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden shrink-0">
+        <div
+          className={cn('h-full rounded-full transition-all', color)}
+          style={{ width: `${Math.min(value, 100)}%` }}
+        />
       </div>
-      <span>{value.toFixed(1)}%</span>
+      <span className="text-xs font-numeric text-foreground">{value.toFixed(1)}%</span>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { DollarSign, TrendingUp } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { KpiCard } from '@/components/dashboard/KpiCard'
@@ -21,7 +21,10 @@ export default function CostsPage() {
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
-    else { setLoading(true); setError(null) }
+    else {
+      setLoading(true)
+      setError(null)
+    }
     try {
       setData(await getCosts())
     } catch (err) {
@@ -32,34 +35,37 @@ export default function CostsPage() {
     }
   }, [])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const isIncrease = (data?.change_percent ?? 0) > 0
 
   return (
     <AppShell>
       <TopBar
-        title="Cost Analytics"
-        subtitle="Detailed AWS spending breakdown"
+        title="Cost Intelligence"
+        subtitle="Cost Analytics"
         onRefresh={() => void load(true)}
         isRefreshing={refreshing}
       />
 
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-6 space-y-5">
         {loading ? (
-          <>
+          <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
-              <SkeletonCard /><SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
             </div>
             <SkeletonTable rows={8} />
-          </>
+          </div>
         ) : error ? (
           <ErrorState message={error} onRetry={() => void load()} />
         ) : data ? (
           <>
             <div className="grid grid-cols-2 gap-4">
               <KpiCard
-                label="Total Spend"
+                label="Current Period"
                 value={formatCurrency(data.total_cost)}
                 change={`${formatPercentage(data.change_percent)} vs previous period`}
                 changePositive={isIncrease}
@@ -68,8 +74,10 @@ export default function CostsPage() {
               <KpiCard
                 label="Previous Period"
                 value={formatCurrency(data.previous_cost)}
-                change={`Difference: ${formatCurrency(Math.abs(data.total_cost - data.previous_cost))}`}
-                icon={TrendingUp}
+                change={`Δ ${formatCurrency(Math.abs(data.total_cost - data.previous_cost))}`}
+                changePositive={!isIncrease}
+                icon={isIncrease ? TrendingUp : TrendingDown}
+                iconColor={isIncrease ? 'text-destructive' : 'text-success'}
               />
             </div>
 

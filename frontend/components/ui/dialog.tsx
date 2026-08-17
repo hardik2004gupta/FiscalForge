@@ -54,7 +54,7 @@ export function Dialog({ open, onClose, title, description, children, className 
       {/* panel */}
       <div
         className={cn(
-          'relative z-10 w-full max-w-md rounded-lg border border-border bg-card shadow-xl',
+          'relative z-10 w-full max-w-md rounded-lg border border-border bg-card shadow-dialog',
           className,
         )}
       >

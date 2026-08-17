@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { DollarSign, TrendingUp, TrendingDown, Server, Lightbulb } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Boxes, Zap } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { KpiCard } from '@/components/dashboard/KpiCard'
@@ -24,7 +24,10 @@ export default function DashboardPage() {
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
-    else { setLoading(true); setError(null) }
+    else {
+      setLoading(true)
+      setError(null)
+    }
     try {
       const [costData, recData] = await Promise.all([getCosts(), getRecommendations()])
       setCosts(costData)
@@ -37,31 +40,35 @@ export default function DashboardPage() {
     }
   }, [])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const isIncrease = (costs?.change_percent ?? 0) > 0
 
   return (
     <AppShell>
       <TopBar
-        title="Dashboard"
-        subtitle="AWS cost overview"
+        title="AWS Overview"
+        subtitle="Dashboard"
         onRefresh={() => void load(true)}
         isRefreshing={refreshing}
       />
 
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-6 space-y-5">
         {loading ? (
-          <>
+          <div className="space-y-5">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
-          </>
+          </div>
         ) : error ? (
           <ErrorState message={error} onRetry={() => void load()} />
         ) : costs && recs ? (
           <>
-            {/* KPI row */}
+            {/* KPI strip */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
                 label="Total Spend"
@@ -81,22 +88,26 @@ export default function DashboardPage() {
               <KpiCard
                 label="Potential Savings"
                 value={formatCurrency(recs.total_estimated_savings)}
-                description="Monthly optimization opportunity"
-                icon={Lightbulb}
+                description={`${recs.recommendations.length} optimization opportunities`}
+                icon={Zap}
                 iconColor="text-success"
               />
               <KpiCard
-                label="Recommendations"
-                value={String(recs.recommendations.length)}
-                description={`${recs.recommendations.filter((r) => r.severity === 'high').length} high severity`}
-                icon={Server}
+                label="Services Tracked"
+                value={String(costs.services.length)}
+                description="AWS services with spend"
+                icon={Boxes}
               />
             </div>
 
             {/* Charts row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <CostChart dailyCosts={costs.daily_costs} />
-              <ServiceBreakdown services={costs.services} />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              <div className="lg:col-span-3">
+                <CostChart dailyCosts={costs.daily_costs} />
+              </div>
+              <div className="lg:col-span-2">
+                <ServiceBreakdown services={costs.services} />
+              </div>
             </div>
 
             {/* Optimization */}

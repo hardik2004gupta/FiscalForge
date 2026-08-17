@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { OctagonX } from 'lucide-react'
+import { OctagonX, Server } from 'lucide-react'
 import { Dialog, DialogActions } from '@/components/ui/dialog'
 import { stopEC2Instance } from '@/lib/api'
 
@@ -35,26 +35,37 @@ export function StopInstanceDialog({ instanceId, onClose, onSuccess }: StopInsta
       open={instanceId !== null}
       onClose={onClose}
       title="Stop EC2 Instance"
-      description={`This will send a stop request to ${instanceId ?? '…'}.`}
     >
       <div className="space-y-4">
-        <div className="flex gap-3 rounded-md bg-destructive/8 p-3">
-          <OctagonX className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-          <div className="text-xs text-foreground space-y-1">
-            <p className="font-medium">Confirm action</p>
-            <p className="text-muted-foreground">
-              The instance will be stopped. Any unsaved data in instance memory will be lost.
-              You can start it again later.
+        {/* Instance summary */}
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
+            <Server className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+              Instance ID
+            </p>
+            <p className="font-mono text-sm font-semibold text-foreground">{instanceId}</p>
+          </div>
+        </div>
+
+        {/* Warning */}
+        <div className="flex gap-3 rounded-lg border border-border bg-muted/20 p-3.5">
+          <OctagonX className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-foreground">This action requires explicit confirmation</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Stopping this instance will shut it down. Any data in instance memory will be
+              lost. The instance can be restarted at any time.
             </p>
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs font-mono text-foreground">
-          {instanceId}
-        </div>
-
         {error && (
-          <p className="text-xs text-destructive">{error}</p>
+          <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 rounded-md px-3 py-2">
+            {error}
+          </p>
         )}
 
         <DialogActions

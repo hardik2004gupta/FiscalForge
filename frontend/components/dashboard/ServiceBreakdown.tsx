@@ -1,79 +1,68 @@
-'use client'
-
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-  type TooltipProps,
-} from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import type { ServiceCost } from '@/types/cost'
 
-const CHART_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--chart-6))',
+// Ordered color palette — restrained, not rainbow
+const BAR_COLORS = [
+  'hsl(237 76% 54%)',   // indigo (primary)
+  'hsl(200 98% 44%)',   // sky
+  'hsl(170 76% 34%)',   // teal
+  'hsl(38 90% 50%)',    // amber
+  'hsl(142 68% 40%)',   // green
+  'hsl(0 68% 51%)',     // red
 ]
 
 interface ServiceBreakdownProps {
   services: ServiceCost[]
 }
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs">
-      <p className="text-muted-foreground mb-1">{payload[0].payload.name}</p>
-      <p className="font-semibold text-foreground font-numeric">
-        {formatCurrency(payload[0].value ?? 0)}
-      </p>
-    </div>
-  )
-}
-
 export function ServiceBreakdown({ services }: ServiceBreakdownProps) {
-  const sorted = [...services].sort((a, b) => b.cost - a.cost).slice(0, 8)
+  const sorted = [...services].sort((a, b) => b.cost - a.cost).slice(0, 7)
+  const total = sorted.reduce((sum, s) => sum + s.cost, 0)
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Cost by Service</h3>
-        <p className="text-xs text-muted-foreground">Top AWS services by spend</p>
+    <div className="rounded-lg border border-border bg-card p-5 shadow-card">
+      <div className="mb-5">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+          Cost by Service
+        </p>
+        <p className="text-sm font-medium text-foreground">Top AWS services by spend</p>
       </div>
 
-      <div className="h-52">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={sorted} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
-            <XAxis
-              type="number"
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-            />
-            <YAxis
-              dataKey="name"
-              type="category"
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              tickLine={false}
-              axisLine={false}
-              width={60}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
-            <Bar dataKey="cost" radius={[0, 3, 3, 0]} maxBarSize={20}>
-              {sorted.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="space-y-3">
+        {sorted.map((svc, idx) => {
+          const pct = total > 0 ? (svc.cost / total) * 100 : 0
+          const color = BAR_COLORS[idx % BAR_COLORS.length]
+
+          return (
+            <div key={svc.name} className="group">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="text-xs font-medium text-foreground truncate max-w-[120px]">
+                    {svc.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs font-semibold text-foreground font-numeric">
+                    {formatCurrency(svc.cost)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-numeric w-9 text-right">
+                    {pct.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${pct}%`, backgroundColor: color }}
+                />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
